@@ -1,6 +1,6 @@
 
 ```markdown
-# Tarra: Property Signing and Verification System
+### Tarra: Property Signing and Verification System
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- Add other badges as you set them up: build status, coverage, etc. -->
@@ -8,7 +8,7 @@
 
 Tarra is a robust Django-based platform designed for secure digital signing and verification of property-related documents and transactions. It aims to bring transparency, immutability, and efficiency to property management by leveraging modern cryptographic techniques and preparing for potential blockchain integration.
 
-## Core Features
+### Core Features
 
 *   **User Management & Enhanced Profiles**: Secure user registration with detailed profiles including identity verification (ID scans, biometrics hash).
 *   **Property Registry**: Comprehensive property information management (type, address, owner, unique identifiers, GPS, survey plan hash).
@@ -19,7 +19,7 @@ Tarra is a robust Django-based platform designed for secure digital signing and 
 *   **RESTful API**: A comprehensive API built with Django REST Framework for all functionalities, documented with Swagger/OpenAPI.
 *   **File Management**: Secure handling of uploaded ID documents and property proofs.
 
-## Technology Stack
+### Technology Stack
 
 *   **Backend**: Python, Django, Django REST Framework
 *   **Database**: (Configurable - e.g., PostgreSQL, MySQL, SQLite)
