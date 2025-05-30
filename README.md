@@ -1,4 +1,3 @@
-Okay, here's a template for your `README.md` file for the "Tarra" project on GitHub, based on the code you've provided.
 
 ```markdown
 # Tarra: Property Signing and Verification System
@@ -55,15 +54,26 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 ### 3. Install Dependencies
 
-Create a `requirements.txt` file with necessary packages. Based on the generated code, it would include at least:
+Setup `requirements.txt` file with necessary packages. Based on the code structure :
 
 ```
 # requirements.txt
-django
-djangorestframework
-psycopg2-binary # If using PostgreSQL
-drf-yasg
-# Add other dependencies as needed (e.g., Pillow for ImageFields if you add them)
+dj-database-url==2.2.0
+django==4.2.16
+psycopg2-binary==2.9.10
+gunicorn==23.0.0
+wheel==0.44.0
+whitenoise==6.7.0
+requests==2.32.3
+django-countries==7.5.1
+pillow==10.3.0
+babel==2.14.0
+boto3==1.35.46
+django-storages==1.14.4
+drf-yasg==1.21.8
+djangorestframework==3.15.2
+django-rest-swagger==2.2.0
+django-phonenumber-field[phonenumbers]==7.3.0
 ```
 
 Then install:
@@ -100,7 +110,7 @@ Copy `.env.example` to `.env` and fill in your actual values.
 Ensure your database server is running and accessible with the credentials in your `.env` file.
 
 ```bash
-python manage.py makemigrations your_app_name # Replace 'your_app_name'
+python manage.py makemigrations api_APP 
 python manage.py migrate
 ```
 
@@ -153,7 +163,7 @@ Refer to the Swagger/ReDoc documentation for detailed request/response schemas a
 ## Running Tests
 
 ```bash
-python manage.py test your_app_name
+python manage.py test api_APP
 ```
 
 ## Deployment
@@ -180,12 +190,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **To make this README fully functional for your project:**
 
 1.  **Replace `yourusername`** in the clone URL and badge URLs with your actual GitHub username.
-2.  **Replace `your_app_name`** with the actual name of your Django app (e.g., `property_system`, `core`).
+2.  **Replace `api_APP`** with the actual name of your Django app (e.g., `property_system`, `core`).
 3.  **Create `requirements.txt`**: Run `pip freeze > requirements.txt` in your activated virtual environment after installing all necessary packages.
 4.  **Create `.env.example`**: As shown above, populate it with the variables your application needs.
 5.  **Create a `LICENSE` file**: If you choose MIT, copy the MIT license text into a file named `LICENSE` in your project root.
-6.  **Adjust URLs**: Make sure the API endpoint URLs in the "API Endpoints Overview" section match your `urls.py` configuration. The login URL (`/auth/login/`) was an example based on the provided snippet; you'll need to integrate it correctly into your `urls.py`.
-7.  **File Uploads**: Ensure `MEDIA_URL` and `MEDIA_ROOT` are correctly configured in your Django `settings.py` (ideally loaded from environment variables) and that the `MEDIA_ROOT` directory exists and is writable by the Django process. For production, you'd typically serve media files separately (e.g., via Nginx or a CDN).
-8.  **Badges**: Set up CI/CD (like GitHub Actions, Travis CI) to get live build status and code coverage badges.
+6.  **File Uploads**: Ensure `MEDIA_URL` and `MEDIA_ROOT` are correctly configured in your Django `settings.py` (ideally loaded from environment variables) and that the `MEDIA_ROOT` directory exists and is writable by the Django process. For production, you'd typically serve media files separately (e.g., via Nginx or a CDN).
+7.  **Badges**: Set up CI/CD (like GitHub Actions, Travis CI) to get live build status and code coverage badges.
 
-This README should give new users and contributors a good understanding of your Tarra project.
+This README gives new users and contributors a good understanding of your Tarra project.
