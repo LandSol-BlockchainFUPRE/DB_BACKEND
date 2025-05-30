@@ -1,0 +1,16 @@
+dj-database-url==2.2.0
+django==4.2.16
+psycopg2-binary==2.9.10
+gunicorn==23.0.0
+wheel==0.44.0
+whitenoise==6.7.0
+requests==2.32.3
+django-countries==7.5.1
+pillow==10.3.0
+babel==2.14.0
+boto3==1.35.46
+django-storages==1.14.4
+drf-yasg==1.21.8
+djangorestframework==3.15.2
+django-rest-swagger==2.2.0
+django-phonenumber-field[phonenumbers]==7.3.0
