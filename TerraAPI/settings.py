@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-+1%ka$3_=o*t8$5&(r9v8=e^xp1=vggyl4y=mf%37b-v^hop*m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*","192.168.55.136","e1e0-102-90-100-9.ngrok-free.app"]
 
 
 # Application definition
@@ -72,6 +72,15 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000", # Example if your frontend is running on localhost:8000
+    "http://192.168.55.136:8000",
+    "https://662c-102-90-100-9.ngrok-free.app",
+    "https://e1e0-102-90-100-9.ngrok-free.app ", # <--- Add the origin of your frontend if it's on this IP
+    # If your frontend is running on a different port on the same IP, add that too:
+    # "http://192.168.55.136:3000",
+]
+
 CORS_ALLOW_ALL_ORIGINS = False 
 CORS_ALLOWED_METHODS = [
     'DELETE',
@@ -91,6 +100,7 @@ CORS_ALLOWED_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
+    "ngrok-skip-browser-warning",
 ]
 
 ROOT_URLCONF = 'TerraAPI.urls'
@@ -172,3 +182,8 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CSRF_TRUSTED_ORIGINS = [
+    "https://e1e0-102-90-100-9.ngrok-free.app",
+]

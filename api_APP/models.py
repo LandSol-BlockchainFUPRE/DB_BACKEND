@@ -5,7 +5,9 @@ from django.contrib.auth.models import AbstractUser # Or get_user_model if exten
 from django.conf import settings
 from django.utils import timezone
 import uuid
-
+from django.core.validators import RegexValidator
+import subprocess
+from django.contrib.auth.models import User
 # If you're using a custom User model, you might extend AbstractUser directly.
 # For simplicity and common practice, we'll assume Django's built-in User
 # and create a UserProfile to extend it.
@@ -17,89 +19,45 @@ class UserProfile(models.Model):
     Extends Django's built-in User model to store additional personal and
     identification data for property system users.
     """
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                primary_key=True,
+    fullname = models.CharField(max_length=200, blank=False,null=False,
                                 help_text="Link to the Django built-in User model.")
     date_of_birth = models.DateField(
         null=True, blank=True,
         help_text="User's date of birth (e.g., YYYY-MM-DD)."
     )
-    nationality = models.CharField(
-        max_length=100,
-        help_text="User's nationality."
-    )
     residential_address = models.TextField(
         help_text="User's full residential address."
     )
-    phone_number = models.CharField(
-        max_length=20, unique=True,
-        help_text="User's phone number, must be unique."
-    )
-    tax_identification_number = models.CharField(
-        max_length=50, unique=True, null=True, blank=True,
-        help_text="User's Tax Identification Number (TIN) or equivalent."
-    )
-    id_type = models.CharField(
-        max_length=50,
-        choices=[
-            ('passport', 'Passport'),
-            ('national_id', 'National ID Card'),
-            ('driver_license', 'Driver\'s License'),
-            ('other', 'Other')
-        ],
-        help_text="Type of government-issued identification."
-    )
+
     id_number = models.CharField(
         max_length=100, unique=True,
         help_text="Number of the government-issued identification."
     )
-    id_issuing_authority = models.CharField(
-        max_length=200,
-        help_text="Authority that issued the identification."
+    password = models.CharField(max_length=200,null=False,blank=False,
+        help_text="Enter Your Auth Token"         
     )
-    id_issue_date = models.DateField(
-        help_text="Date the identification was issued."
-    )
-    id_expiry_date = models.DateField(
-        null=True, blank=True,
-        help_text="Date the identification expires (if applicable)."
-    )
-    # Storing path to scanned ID copies. Actual files should be in a secure storage.
-    # For a real system, consider a dedicated file storage solution (e.g., S3, Google Cloud Storage)
-    # and store only references/hashes here.
-    scanned_id_front = models.FileField(
-        upload_to='user_ids/front/', null=True, blank=True,
-        help_text="Scanned copy of the front of the ID."
-    )
-    scanned_id_back = models.FileField(
-        upload_to='user_ids/back/', null=True, blank=True,
-        help_text="Scanned copy of the back of the ID."
-    )
-    # Biometric data references (e.g., hash of biometric template)
-    # Actual biometric data should never be stored directly in a database.
-    biometric_hash = models.CharField(
-        max_length=255, null=True, blank=True, unique=True,
-        help_text="Cryptographic hash of user's biometric template (e.g., facial or fingerprint)."
-    )
-    # Blockchain wallet address for the user
-    blockchain_wallet_address = models.CharField(
-        max_length=255, unique=True, null=True, blank=True,
-        help_text="User's public blockchain wallet address."
-    )
-
     def __str__(self):
-        return f"Profile for {self.user.get_full_name() or self.user.username}"
+        return f"Profile for {self.fullname}"
+
+
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+@receiver(pre_save, sender=UserProfile) # Replace YourModelName with the actual name of your model
+def create_user_before_save(sender, instance, **kwargs):
+    if not instance.pk: # If the primary key is not set, it's a new object
+        username = instance.id_number # Get username from your model instance
+        password = instance.password # Get password from your model instance
+        
+        # Your original code:
+        user = User.objects.create_user(username=username, password=password)
+        user.save()
 
 class Property(models.Model):
     """
     Represents a physical property being transacted on the blockchain.
     """
     PROPERTY_TYPES = [
-        ('residential', 'Residential'),
-        ('commercial', 'Commercial'),
         ('land', 'Land'),
-        ('apartment', 'Apartment'),
-        ('other', 'Other'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -119,7 +77,7 @@ class Property(models.Model):
         help_text="Detailed description of the property (e.g., number of rooms, size)."
     )
     current_owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='owned_properties',
+        UserProfile, on_delete=models.PROTECT, related_name='owned_properties',
         help_text="The current legal owner of the property."
     )
     # Reference to proof of ownership document (e.g., scanned title deed)
@@ -141,11 +99,40 @@ class Property(models.Model):
         max_length=255, null=True, blank=True,
         help_text="Cryptographic hash of the property's survey plan."
     )
+    ipfs_hash = models.CharField(
+        max_length=255, null=True, blank=True,
+        help_text="InterPlanetary File System Block ID"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.unique_property_identifier} - {self.full_address[:50]}..."
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)  # Save the file first so it exists on disk
+
+        if self.proof_of_ownership_document and not self.ipfs_hash:
+            try:
+                # Run IPFS add command
+                result = subprocess.run(
+                    ["ipfs", "add", self.proof_of_ownership_document.path],
+                    capture_output=True, text=True, check=True
+                )
+
+                # Extract IPFS hash (usually first token in last line)
+                ipfs_output = result.stdout.strip().splitlines()[-1]
+                ipfs_hash = ipfs_output.split()[1]  # "added <hash> <filename>"
+
+                self.ipfs_hash = ipfs_hash
+                super().save(update_fields=["ipfs_hash"])  # Save hash without recursion
+
+            except subprocess.CalledProcessError as e:
+                # Optional: Log error or raise custom exception
+                print("Error running IPFS add:", e.stderr)
+
+
+
+
 
 class Document(models.Model):
     """
@@ -181,7 +168,7 @@ class Document(models.Model):
         help_text="SHA-256 hash of the document content for blockchain integrity."
     )
     uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+        UserProfile, on_delete=models.SET_NULL, null=True,
         help_text="User who uploaded this document."
     )
     upload_date = models.DateTimeField(auto_now_add=True)
@@ -292,3 +279,65 @@ class DigitalSignature(models.Model):
         # Ensures a user can't sign the same document multiple times with the same signature value
         # (though typically a new signature would be generated for each signing event if content changes)
         unique_together = ('document', 'signer', 'signature_value')
+
+
+
+
+# Define a custom validator for NIN (11 digits)
+nin_validator = RegexValidator(
+    regex=r'^\d{11}$',
+    message='NIN must be exactly 11 digits.',
+    code='invalid_nin'
+)
+
+class NINInfo(models.Model):
+    nin = models.CharField(
+        max_length=11,
+        unique=True,
+        validators=[nin_validator],
+        help_text="The 11-digit National Identification Number."
+    )
+    first_name = models.CharField(
+        max_length=100,
+        help_text="The first name of the individual."
+    )
+    middle_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="The middle name of the individual (optional)."
+    )
+    last_name = models.CharField(
+        max_length=100,
+        help_text="The last name of the individual."
+    )
+    date_of_birth = models.DateField(
+        help_text="The date of birth of the individual."
+    )
+    phone_number = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text="The phone number associated with the NIN (optional)."
+    )
+    email = models.EmailField(
+        max_length=254,
+        blank=True,
+        null=True,
+        help_text="The email address associated with the NIN (optional)."
+    )
+    date_registered = models.DateTimeField(
+        default=timezone.now,
+        help_text="The date and time when this NIN record was created."
+    )
+
+    class Meta:
+        verbose_name = "NIN Information"
+        verbose_name_plural = "NIN Information"
+        ordering = ['last_name', 'first_name']
+
+    def __str__(self):
+        """
+        Returns a string representation of the NINInfo instance.
+        """
+        return f"{self.first_name} {self.last_name} ({self.nin})"

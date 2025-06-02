@@ -5,7 +5,7 @@ from ..models import *
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.views.decorators.csrf import csrf_exempt
-
+from django.http import JsonResponse
 
 from django.contrib.auth import authenticate
 from rest_framework import status
@@ -70,8 +70,6 @@ def property_list_create(request):
     elif request.method == 'POST':
         serializer = PropertySerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            # Optionally, set current_owner to request.user if not provided and allowed by business logic
-            # serializer.save(current_owner=request.user) # If current_owner is meant to be the creator
             serializer.save() # Assumes current_owner ID is in request.data
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -117,12 +115,12 @@ def property_list_create(request):
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser]) # For proof_of_ownership_document
-def property_detail_update_delete(request, pk): # pk is Property UUID
+def property_detail_update_delete(request, ipfs): # pk is Property UUID
     """
     Retrieve, update or delete a property instance.
     """
     try:
-        property_obj = Property.objects.get(pk=pk)
+        property_obj = Property.objects.get(ipfs_hash=ipfs)
     except Property.DoesNotExist:
         return Response({'detail': 'Property not found.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -131,6 +129,7 @@ def property_detail_update_delete(request, pk): # pk is Property UUID
 
     if request.method == 'GET':
         serializer = PropertySerializer(property_obj, context={'request': request})
+        print(serializer.data)
         return Response(serializer.data)
 
     elif request.method == 'PUT':
@@ -140,6 +139,7 @@ def property_detail_update_delete(request, pk): # pk is Property UUID
         serializer = PropertySerializer(property_obj, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
+            print(serializer.data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

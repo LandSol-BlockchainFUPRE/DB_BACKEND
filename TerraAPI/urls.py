@@ -19,7 +19,7 @@ from django.urls import include, re_path
 from django.contrib import admin
 from django.urls import path
 from api_APP import views
-from api_APP.endpoints import digitalsig, login_endpoint,transactions,property,document
+from api_APP.endpoints import digitalsig, login_endpoint,transactions,property,document,nin,login
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import re_path
@@ -39,15 +39,30 @@ schema_view = get_schema_view(
    public=True,
    permission_classes=(permissions.AllowAny,),
 )
+
+admin.site.site_header = "TerraRegistry And RWA Tokenizer"  
+admin.site.site_title = "TerraRegistry" 
+admin.site.index_title = "Welcome to TerraRegistry"
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    #path('accounts/login/', admin.site.urls), 
+
+    path('login/', login.custom_login, name='api_custom_login'), # Use the new custom login view
+    path('logout/', login.custom_logout, name='api_custom_logout'), # Optional logout
+    path('protected/', login.protected, name='protected_fbv'),
+
+
+
+    path('nin-info/', nin.nin_info_list_create, name='nininfo-list-create'),
+    path('verify-nin-info/<str:code>/', nin.nin_info_detail_update_delete, name='nininfo-detail'),
 
     path('user-profiles/', login_endpoint.user_profile_list_create, name='userprofile-list-create'),
     path('user-profiles/<int:pk>/', login_endpoint.user_profile_detail_update_delete, name='userprofile-detail'), # pk is user_id
 
     path('properties/', property.property_list_create, name='property-list-create'),
-    path('properties/<uuid:pk>/', property.property_detail_update_delete, name='property-detail'),
+    path('properties/<str:ipfs>/', property.property_detail_update_delete, name='property-detail'),
 
     path('documents/', document.document_list_create, name='document-list-create'),
     path('documents/<uuid:pk>/', document.document_detail_update_delete, name='document-detail'),

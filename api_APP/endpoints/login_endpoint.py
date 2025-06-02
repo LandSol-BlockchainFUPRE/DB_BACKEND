@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny # AllowAny for public endpoints
 from rest_framework.parsers import MultiPartParser, FormParser # For file uploads
 
-
+from django.contrib.auth.models import User as addnew
 from rest_framework.authtoken.models import Token
 import smtplib, ssl
 from email.mime.text import MIMEText
@@ -59,7 +59,6 @@ RESPONSE_404_NOT_FOUND = openapi.Response(description="Resource not found")
 )
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated]) # Or specific permissions
-@parser_classes([MultiPartParser, FormParser]) # For scanned_id_front/back
 def user_profile_list_create(request):
     """
     List all user profiles or create a new one.
@@ -73,9 +72,11 @@ def user_profile_list_create(request):
     elif request.method == 'POST':
         serializer = UserProfileSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
+            print("hhcygcygctgcgtgxxtcy cyuduttdr")
             # Ensure the user ID provided for the profile doesn't already have a profile
-            user_id = serializer.validated_data.get('user').id # Access the User object then its id
-            if UserProfile.objects.filter(user_id=user_id).exists():
+            user_id = serializer.validated_data.get('id_number') # Access the User object then its id
+            print(user_id)
+            if UserProfile.objects.filter(id_number=user_id).exists():
                  return Response(
                      {'user': [f'User profile for user ID {user_id} already exists.']},
                      status=status.HTTP_400_BAD_REQUEST
